@@ -1,0 +1,31 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ .Values.namespace }}
+  name: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.prometheus.label.app }}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.prometheus.label.app }}
+    spec:
+      serviceAccountName: prometheus
+      containers:
+      - name: prometheus
+        image: {{ .Values.prometheus.container.image }}
+        ports:
+        - containerPort: {{ .Values.prometheus.container.port }}
+          name: http-prometheus
+          protocol: TCP
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/prometheus
+      volumes:
+      - name: config-volume
+        configMap:
+         name: prometheus-config

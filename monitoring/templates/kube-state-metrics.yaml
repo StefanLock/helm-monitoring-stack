@@ -1,0 +1,37 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-state-metrics
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.kubestatemetrics.label.app }}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.kubestatemetrics.label.app }}
+    spec:
+      serviceAccountName: prometheus
+      containers:
+      - name: kube-state-metrics
+        image: {{ .Values.kubestatemetrics.container.image }}
+        ports:
+        - containerPort: {{ .Values.kubestatemetrics.container.port }}
+          name: monitoring
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: kube-state-metrics
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: {{ .Values.kubestatemetrics.label.app }}
+  type: LoadBalancer
+  ports:
+  - protocol: TCP
+    port: {{ .Values.kubestatemetrics.container.port }}
+    targetPort: {{ .Values.kubestatemetrics.container.port }}

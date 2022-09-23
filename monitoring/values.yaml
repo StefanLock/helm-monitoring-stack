@@ -1,0 +1,50 @@
+---
+namespace: monitoring
+
+grafana:
+  label:
+    app: grafana
+  container:
+    image: grafana/grafana:8.4.4
+    port: 3000
+    resources:
+      cpu: 250m
+      memory: 750Mi
+  persistentVolumeClaim:
+    resources:
+      storage: 1Gi
+  dashboardProviders:
+   dashboardproviders.yaml:
+     apiVersion: 1
+     providers:
+     - name: 'default'
+       orgId: 1
+       folder: ''
+       type: file
+       disableDeletion: false
+       editable: true
+       options:
+         path: /var/lib/grafana/dashboards/default
+  dashboardsConfigMaps:
+    default: "grafana-dashboard"
+
+prometheus:
+  label:
+    app: prometheus
+  container:
+    image: prom/prometheus:v2.1.0
+    port: 9090
+
+exporters:
+  nodeexporter:
+    label:
+      name: node-exporter
+    image: prom/node-exporter
+    port: 9100
+
+kubestatemetrics:
+  label:
+    app: kube-state-metrics
+  container:
+    image: bitnami/kube-state-metrics:latest
+    port: 8080

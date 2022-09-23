@@ -1,0 +1,33 @@
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: node-exporter
+  namespace: {{ .Values.namespace }}
+  annotations:
+      prometheus.io/scrape: 'true'
+      prometheus.io/port:   '9100'
+spec:
+  selector:
+      app.kubernetes.io/component: exporter
+      app.kubernetes.io/name: {{ .Values.exporters.nodeexporter.label.name }}
+  ports:
+  - name: node-exporter
+    protocol: TCP
+    port: {{ .Values.exporters.nodeexporter.port }}
+    targetPort: {{ .Values.exporters.nodeexporter.port }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: {{ .Values.namespace }}
+  name: prometheus
+spec:
+  ports:
+    - port: {{ .Values.prometheus.container.port }}
+      protocol: TCP
+      targetPort: http-prometheus
+  selector:
+    app: {{ .Values.prometheus.label.app }}
+  sessionAffinity: None
+  type: LoadBalancer

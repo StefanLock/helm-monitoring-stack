@@ -1,0 +1,75 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.grafana.label.app }}
+  name: grafana
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Values.grafana.label.app }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.grafana.label.app }}
+    spec:
+      securityContext:
+        fsGroup: 472
+        supplementalGroups:
+          - 0
+      containers:
+        - name: grafana
+          image: {{ .Values.grafana.container.image }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ .Values.grafana.container.port }}
+              name: http-grafana
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /robots.txt
+              port: {{ .Values.grafana.container.port }}
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            successThreshold: 1
+            timeoutSeconds: 2
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: {{ .Values.grafana.container.port }}
+            timeoutSeconds: 1
+          resources:
+            requests:
+              cpu: {{ .Values.grafana.container.resources.cpu }}
+              memory: {{ .Values.grafana.container.resources.memory }}
+          volumeMounts:
+            - mountPath: /var/lib/grafana
+              name: grafana-pv
+            - mountPath: /etc/grafana/provisioning/datasources
+              name: grafana-datasources
+              readOnly: false
+            - mountPath: /etc/grafana/provisioning/dashboards
+              name: grafana-dashboard
+              readOnly: false
+      volumes:
+        - name: grafana-pv
+          persistentVolumeClaim:
+            claimName: grafana-pvc
+        - name: grafana-datasources
+          configMap:
+              defaultMode: 420
+              name: grafana-datasources
+        - name: grafana-dashboard
+          projected:
+            sources:
+            - configMap:
+                name: grafana-dashboard
+            - configMap:
+                name: grafana-dash
